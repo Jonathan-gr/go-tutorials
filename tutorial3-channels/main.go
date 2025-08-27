@@ -1,25 +1,39 @@
 package main
 
+import (
+	"fmt"
+)
+
+type Server struct {
+	users map[string]string
+}
+
+func newServer() *Server {
+	return &Server{
+		users: make(map[string]string),
+	}
+}
+
+func (s *Server) addUser(username, password string) {
+	s.users[username] = password
+}
+
 func main() {
+	s := newServer()
+	for i := 0; i < 5; i++ {
+		s.addUser(fmt.Sprintf("user%d", i), "password")
+	}
+	for username, password := range s.users {
+		fmt.Printf("Username: %s, Password: %s\n", username, password)
+	}
+}
+func sendMessage(msgch chan<- string, msg string) {
 
-	//unbuffered channel
-	//causes a deadlock
-	// userch := make(chan string)
+	msgch <- msg
 
-	// userch <- "hello2"
-	// userch <- "hello"
-	// user := <-userch
-	// user2 := <-userch
-	// println(user)
-	// println(user2)
+}
 
-	// buffered channel
-	userch := make(chan string, 2)
-	userch <- "hello2"
-	userch <- "hello"
-	user := <-userch
-	user2 := <-userch
-	println(user)
-	println(user2)
-
+func receiveMessage(msgch <-chan string) {
+	msg := <-msgch
+	fmt.Println(msg)
 }
