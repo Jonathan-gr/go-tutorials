@@ -2,38 +2,45 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
 func main() {
 
 	now := time.Now()
-
+	respch := make(chan string, 3)
+	wg := &sync.WaitGroup{}
 	userID := 10
 
-	data := fetchUserData(userID)
-	rec := fetchUserRecomendations(userID)
-	likes := fetchUserLikes(userID)
+	wg.Add(3)
+	go fetchUserData(userID, respch, wg)
+	go fetchUserRecomendations(userID, respch, wg)
+	go fetchUserLikes(userID, respch, wg)
 
-	fmt.Println(data)
-	fmt.Println(rec)
-	fmt.Println(likes)
+	wg.Wait()
+	close(respch)
+	for res := range respch {
+		fmt.Println(res)
+	}
 
 	fmt.Println(time.Since(now))
-
 }
 
-func fetchUserData(userID int) string {
+func fetchUserData(userID int, respch chan<- string, wg *sync.WaitGroup) {
 	time.Sleep(100 * time.Millisecond)
-	return "user data"
+	respch <- "user data"
+	defer wg.Done()
 }
 
-func fetchUserRecomendations(userID int) string {
+func fetchUserRecomendations(userID int, respch chan<- string, wg *sync.WaitGroup) {
 	time.Sleep(100 * time.Millisecond)
-	return "user recomendations"
+	respch <- "user recomendations"
+	defer wg.Done()
 }
 
-func fetchUserLikes(userID int) string {
+func fetchUserLikes(userID int, respch chan<- string, wg *sync.WaitGroup) {
 	time.Sleep(100 * time.Millisecond)
-	return "user likes "
+	respch <- "user likes "
+	defer wg.Done()
 }
