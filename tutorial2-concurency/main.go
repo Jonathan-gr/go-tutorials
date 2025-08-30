@@ -2,45 +2,37 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	"time"
 )
 
 func main() {
+	ch1 := make(chan int)
+	ch2 := make(chan string)
 
-	now := time.Now()
-	respch := make(chan string, 3)
-	wg := &sync.WaitGroup{}
-	userID := 10
+	// Goroutine 1
+	go func() {
+		time.Sleep(1 * time.Second)
+		ch1 <- 21
+	}()
 
-	wg.Add(3)
-	go fetchUserData(userID, respch, wg)
-	go fetchUserRecomendations(userID, respch, wg)
-	go fetchUserLikes(userID, respch, wg)
+	// Goroutine 2
+	go func() {
+		time.Sleep(2 * time.Second)
+		ch2 <- "message from ch2"
+	}()
 
-	wg.Wait()
-	close(respch)
-	for res := range respch {
-		fmt.Println(res)
+	// Loop that waits for messages
+	for {
+		select {
+		case msg1 := <-ch1:
+			fmt.Println("Received:", msg1)
+		case msg2 := <-ch2:
+			fmt.Println("Received:", msg2)
+			return // exit after receiving from ch2
+		default:
+			// runs immediately if no case is ready
+			fmt.Println("No messages yet...")
+			time.Sleep(300 * time.Millisecond)
+		}
 	}
-
-	fmt.Println(time.Since(now))
-}
-
-func fetchUserData(userID int, respch chan<- string, wg *sync.WaitGroup) {
-	time.Sleep(100 * time.Millisecond)
-	respch <- "user data"
-	defer wg.Done()
-}
-
-func fetchUserRecomendations(userID int, respch chan<- string, wg *sync.WaitGroup) {
-	time.Sleep(100 * time.Millisecond)
-	respch <- "user recomendations"
-	defer wg.Done()
-}
-
-func fetchUserLikes(userID int, respch chan<- string, wg *sync.WaitGroup) {
-	time.Sleep(100 * time.Millisecond)
-	respch <- "user likes "
-	defer wg.Done()
 }
